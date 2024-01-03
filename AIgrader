@@ -1,0 +1,294 @@
+import openai
+import re
+
+openai.api_key = "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"
+
+
+messages = [
+    {"role": "system", "content": """You are an AI grader. You have to evaluate the input to the rubric to the best of your abilities. Respond if the response earned a point for a category on the rubric, and provide feedback on how to better the response or earn the point.
+    First, ask for the prompt/question.
+     If you are not provided with an explicit and clear prompt or question, don't evaluate anything and keep asking for a prompt/question, until one is provided."""},
+]
+
+rubrics = {
+    'leqrubric': """THESIS/CLAIM
+					(0–1	pt)
+1	pt.
+Responds	to	the	prompt	with	a	historically
+defensible	thesis/claim	that	establishes	a
+line	of	reasoning.
+To	earn	this	point,	the	thesis	must	make	a	claim	that
+responds	to	the	prompt,	rather	than	merely	restating	or
+rephrasing	the	prompt.	The	thesis	must	consist	of	one	or
+more	sentences	located	in	one	place,	either	in	the
+introduction	or	the	conclusion.
+CONTEXTUALIZATION
+					(0–1	pt)
+1	pt.
+Describes	a	broader	historical	context
+relevant	to	the	prompt.
+To	earn	this	point,	the	response	must	relate	the	topic	of	the
+prompt	to	broader	historical	events,	developments,	or
+processes	that	occur	before,	during,	or	continue	after	the
+time	frame	of	the	question.	This	point	is	not	awarded	for
+merely	a	phrase	or	a	reference.
+					EVIDENCE
+					(0–2	pts)
+1	pt.
+Provides	specific	examples	of	evidence
+relevant	to	the	topic	of	the	prompt.
+OR
+2	pts.
+Supports	an	argument	in	response	to	the
+prompt	using	specific	and	relevant	examples
+of	evidence.
+To	earn	one	point,	the	response	must	identify	specific
+historical	examples	of	evidence	relevant	to	the	topic	of	the
+prompt.
+To	earn	two	points	the	response	must	use	specific	historical
+evidence	to	support	an	argument	in	response	to	the	prompt.
+				ANALYSIS
+				&
+				REASONING
+				(0–2	pts)
+1	pt.
+Uses	historical	reasoning	(e.g.	comparison,
+causation,	CCOT)	to	frame	or	structure	an
+argument	that	addresses	the	prompt.
+OR
+2	pts.
+Demonstrates	a	complex	understanding	of
+the	historical	development	that	is	the	focus
+of	the	prompt,	using	evidence	to
+corroborate,	qualify, or	modify	an	argument
+that	addresses	the	question.
+To	earn	the	first	point,	the	response	must	demonstrate	the
+use	of	historical	reasoning	to	frame	or	structure	an
+argument,	although	the	reasoning	might	be	uneven	or
+imbalanced.
+To	earn	the	second	point,	the	response	must	demonstrate	a
+complex	understanding.	This	can	be	accomplished	in	a
+variety	of	ways,	such	as:
+• Explaining	nuance	of	an	issue	by	analyzing	multiple
+variables
+• Explaining	both	similarity	and	difference,	or
+explaining	both	continuity	and	change,	or
+explaining	multiple	causes,	or	explaining	both
+causes	and	effects
+• Explaining	relevant	and	insightful	connections
+within	and	across	periods
+• Confirming	the	validity	of	an	argument	by
+corroborating	multiple	perspectives	across	themes
+• Qualifying	or	modifying	an	argument	by
+considering	diverse	or	alternative	views	or	evidence
+This	understanding	must	be	part	of	the	argument,
+not	merely	a	phrase	or	reference.""",
+    'rubric2' : """Row A
+Thesis
+(0-1 points)
+4.B
+0 points
+For any of the following:
+• There is no defensible thesis.
+• The intended thesis only restates the prompt.
+• The intended thesis provides a summary of the issue with no
+apparent or coherent claim.
+• There is a thesis, but it does not respond to the prompt.
+1 point
+Responds to the prompt with a thesis that presents a defensible position.
+Decision Rules and Scoring Notes
+Responses that do not earn this point:
+• Only restate the prompt.
+• Do not take a position, or the position is vague or must
+be inferred.
+• Equivocate or summarize other’s arguments but not the student’s
+(e.g., some people say it’s good, some people say it’s bad).
+• State an obvious fact rather than making a claim that requires
+a defense.
+Responses that earn this point:
+• Responds to the prompt rather than restate or rephrase the prompt, and the
+thesis clearly takes a position rather than just stating that there are pros/cons.
+Additional Notes:
+• The thesis may be more than one sentence, provided the sentences are in close proximity.
+• The thesis may be anywhere within the response.
+• For a thesis to be defensible, the sources must include at least minimal evidence that could be used to support that thesis; however, the student need
+not cite that evidence to earn the thesis point.
+• The thesis may establish a line of reasoning that structures the essay, but it needn’t do so to earn the thesis point.
+• A thesis that meets the criteria can be awarded the point whether or not the rest of the response successfully supports that line of reasoning.
+AP English Language Scoring Rubric, Free-Response Question 1-3 | SG 2
+Reporting
+Category Scoring Criteria
+Row B
+Evidence
+AND
+Commentary
+(0-4 points)
+2.A
+4.A
+6.A
+6.B
+6.C
+0 points
+Simply restates thesis
+(if present), repeats
+provided information, or
+references fewer than two
+of the provided sources.
+1 point
+EVIDENCE:
+Provides evidence from or
+references at least two of the
+provided sources.
+AND
+COMMENTARY:
+Summarizes the evidence
+but does not explain how
+the evidence supports the
+student’s argument.
+2 points
+EVIDENCE:
+Provides evidence from or
+references at least three of
+the provided sources.
+AND
+COMMENTARY:
+Explains how some of the
+evidence relates to the
+student’s argument, but
+no line of reasoning is
+established, or the line of
+reasoning is faulty.
+3 points
+EVIDENCE:
+Provides specific evidence
+from at least three of
+the provided sources to
+support all claims in a line of
+reasoning.
+AND
+COMMENTARY:
+Explains how some of the
+evidence supports a line of
+reasoning.
+4 points
+EVIDENCE:
+Provides specific
+evidence from at least
+three of the provided
+sources to support
+all claims in a line of
+reasoning.
+AND
+COMMENTARY:
+Consistently explains how
+the evidence supports a
+line of reasoning.
+Decision Rules and Scoring Notes
+Typical responses that
+earn 0 points:
+• Are incoherent or do not
+address the prompt.
+• May be just opinion with
+no textual references
+or references that are
+irrelevant.
+Typical responses that earn
+1 point:
+• Tend to focus on summary
+or description of sources
+rather than specific
+details.
+Typical responses that earn
+2 points:
+• Consist of a mix of
+specific evidence and
+broad generalities.
+• May contain some
+simplistic, inaccurate, or
+repetitive explanations
+that don’t strengthen the
+argument.
+• May make one point well
+but either do not make
+multiple supporting claims
+or do not adequately
+support more than one
+claim.
+• Do not explain the
+connections or
+progression between the
+student’s claims, so a line
+of reasoning is not clearly
+established.
+Typical responses that earn
+3 points:
+• Uniformly offer evidence
+to support claims.
+• Focus on the importance
+of specific words and
+details from the sources
+to build an argument.
+• Organize an argument
+as a line of reasoning
+composed of multiple
+supporting claims.
+• Commentary may fail to
+integrate some evidence
+or fail to support a key
+claim.
+Typical responses that
+earn 4 points:
+• Uniformly offer
+evidence to support
+claims.
+• Focus on the
+importance of specific
+words and details from
+the sources to build an
+argument.
+• Organize and support
+an argument as a line of
+reasoning composed
+of multiple supporting
+claims, each with
+adequate evidence that
+is clearly explained."""
+
+}
+
+
+def extract_prompt(input_text):
+    prompt_match = re.search(r'(?:\b(prompt|question)\b:?\s*(.*?))?(\s*response:?\s*(.*?))?(\s*rubric|$)', input_text, re.IGNORECASE)
+
+    if prompt_match:
+      prompt = prompt_match.group(2).strip()
+      response = prompt_match.group(3).strip()
+      return prompt, response
+    else:
+      return None, None
+
+def extract_rubric_name(input_text):
+    rubric_name_match = re.search(r'rubric\s*name\s*:\s*(\w+)', input_text, re.IGNORECASE)
+    if rubric_name_match:
+      return rubric_name_match.group(1).lower()
+    else:
+      return None
+
+def chatbot(input, rubric_name):
+
+    prompt, response = extract_prompt(input)
+
+    if not prompt or not response or not rubric_name:
+        return "Please provide a valid prompt, response, and rubric name."
+
+    if rubric_name not in rubrics:
+        return "Invalid rubric name. Please choose a valid rubric."
+
+    rubric = rubrics[rubric_name]
+
+    messages.append({"role": "user", "content": f"{prompt} response: {response} {rubric}"})
+    chat = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
+    reply = chat.choices[0].message.content
+
+    messages.append({"role": "assistant", "content": reply})
+    return reply
